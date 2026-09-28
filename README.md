@@ -1,36 +1,76 @@
-# Proyecto Integrador Red de Sensores IoT
->Proyecto base del curso de estructura de datos.
+# Plataforma de Monitoreo Ambiental Urbano 🌍
 
-## Modulo de ingesta
+> Proyecto integrador del curso de Estructuras de Datos.
 
-`src/IngestaSensores.java` lee el archivo `data/lecturas.csv` y muestra:
+Sistema de ingesta, almacenamiento y análisis de datos ambientales provenientes de una red IoT de 9 estaciones de monitoreo distribuidas en la ciudad.
 
-- Cada lectura con su estacion, fecha, temperatura, humedad y PM2.5.
-- La cantidad de registros procesados.
-- El promedio de temperatura, humedad y PM2.5.
-- La estacion con el valor mas alto de PM2.5.
+## Descripción
+
+El proyecto modela una **Plataforma de Monitoreo Ambiental Urbano** que:
+- Lee lecturas de sensores (temperatura, humedad, PM2.5) desde archivos CSV
+- Valida datos descartando filas con formato incorrecto o fuera de rangos físicos
+- Detecta y descarta lecturas duplicadas (misma estación + misma hora)
+- Almacena las lecturas en un TAD basado en arreglos con redimensionamiento dinámico
+- Analiza la contaminación por PM2.5 usando una matriz estaciones × horas
+- Calcula promedios por hora, por estación y encuentra la hora más contaminada
+
+## Estructura del proyecto
+
+```
+ed_red_sensores_iot/
+├── src/
+│   ├── LecturaSensor.java        # Modelo de una lectura de sensor
+│   ├── RepositorioLecturas.java   # TAD con arreglo dinámico
+│   ├── AnalizadorMatriz.java      # Matriz 9×24 para análisis por hora
+│   └── IngestaSensores.java       # Ingesta CSV y punto de entrada (main)
+├── data/
+│   ├── lecturas.csv               # Dataset de prueba (29 filas)
+│   └── lecturas_ampliadas.csv     # Dataset completo (212 filas)
+├── docs/
+│   ├── contrato_tad.md            # Especificación formal del TAD
+│   ├── decisiones.md              # Registro de decisiones de diseño
+│   └── GUIA_GIT.md                # Guía de uso de Git para el equipo
+├── bitacoras/                     # Bitácoras individuales de los estudiantes
+├── out/                           # Archivos compilados (excluido de Git)
+└── .gitignore
+```
+
+## Cómo compilar y ejecutar
+
+Desde la carpeta raíz del proyecto, con un JDK instalado:
+
+```bash
+# Compilar
+javac -d out src/LecturaSensor.java src/RepositorioLecturas.java src/AnalizadorMatriz.java src/IngestaSensores.java
+
+# Ejecutar (desde la carpeta data/ para que encuentre el CSV)
+cd data
+java -cp ../out IngestaSensores
+```
 
 ### Conceptos principales
 
-- `BufferedReader` lee el archivo una linea a la vez.
+- `BufferedReader` lee el archivo una línea a la vez.
 - `split(",")` separa las columnas del CSV.
-- `Double.parseDouble` convierte texto numerico a `double`.
-- Los acumuladores suman los valores para calcular promedios.
-- La condicion `if` compara cada PM2.5 con el maximo encontrado.
+- `Double.parseDouble` convierte texto numérico a `double`.
+- Arreglos con redimensionamiento por duplicación de capacidad.
+- Validación de rangos físicos y detección de duplicados.
+- Matriz de 9 estaciones × 24 horas para análisis de PM2.5.
 
-### Ejecucion
+## Restricciones de diseño
 
-Desde la carpeta `src`, con un JDK instalado:
+- **No se usan colecciones de Java** (`ArrayList`, `HashMap`, etc.)
+- Solo arreglos primitivos y de objetos
+- Redimensionamiento por **duplicación** de capacidad
+- Eliminación por **compactación** (desplazamiento a la izquierda)
+- Validación de rangos físicos: temperatura (-40 a 60°C), humedad (0-100%) y PM2.5 (≥ 0)
 
-```text
-javac IngestaSensores.java
-java IngestaSensores
-```
+## Equipo
 
-El programa espera encontrar `lecturas.csv` en la carpeta desde la que se
-ejecuta. Por ejemplo, copia el CSV a `src` o ejecuta el programa desde `data`
-ajustando la ruta del archivo en el codigo.
-
-> Nota: el CSV de ejemplo contiene valores vacios y textos como `ERR`. El
-> programa actual intenta convertir todos los valores de medicion a numero,
-> por lo que esas filas pueden producir un error durante la ejecucion.
+| Integrante | Rol |
+|---|---|
+| Alejandro Tafur Rodriguez | TAD, Contrato y Documentación |
+| Juan Felipe Castellanos Bran | RepositorioLecturas (búsqueda, actualización, eliminación) |
+| Juan Pablo Lozada Lopez | AnalizadorMatriz (promedios, ceros fantasma) |
+| Jedreck Triana Venner | LecturaSensor y estructura base |
+| Julian Hernandez | Configuración del proyecto y estructura |

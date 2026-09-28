@@ -1,6 +1,6 @@
 /* ============================================================
    PLATAFORMA DE MONITOREO AMBIENTAL URBANO
-   AnalizadorMatriz - VERSION 0.1 INCOMPLETA
+   AnalizadorMatriz - VERSION 1.0 COMPLETA
 
    Una matriz de 9 estaciones x 24 horas para responder
    preguntas como: a que hora del dia se contamina mas la ciudad,
@@ -40,17 +40,19 @@ public class AnalizadorMatriz {
 
     /**
      * Promedio de PM2.5 de una hora del dia, sobre todas las estaciones.
-     *
-     * TODO 1: este metodo tiene un problema serio. Ejecutalo primero,
-     * mira los resultados de las horas 09, 10, 11 y 12, y averigua por que.
-     * Pista: revisa cuantas filas trae EST-003 en el archivo.
+     * Ignora ceros fantasma: solo cuenta estaciones con dato real (valor > 0).
      */
     public double promedioDeHora(int hora) {
         double suma = 0;
+        int contadorValidos = 0;
         for (int fila = 0; fila < NUM_ESTACIONES; fila++) {
-            suma = suma + pm25PorEstacionHora[fila][hora];
+            double valor = pm25PorEstacionHora[fila][hora];
+            if (valor > 0.0) {
+                suma += valor;
+                contadorValidos++;
+            }
         }
-        return suma / NUM_ESTACIONES;
+        return contadorValidos == 0 ? 0.0 : suma / contadorValidos;
     }
 
     /**

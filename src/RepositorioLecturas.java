@@ -1,16 +1,12 @@
 /* ============================================================
    PLATAFORMA DE MONITOREO AMBIENTAL URBANO
-   TAD RepositorioLecturas - VERSION 0.1 INCOMPLETA
+   TAD RepositorioLecturas - VERSION 1.0 COMPLETA
 
-   Este es el Tipo Abstracto de Dato del semestre: quien lo usa
-   solo conoce las operaciones publicas de abajo. NO deberia
-   saber que por dentro hay un arreglo.
+   Tipo Abstracto de Dato que almacena lecturas de sensores
+   en un arreglo dinamico con redimensionamiento por duplicacion.
 
-   Ese es el contrato. Respetalo mientras lo completas.
-
-   ADVERTENCIA: esta version corre sin caerse y entrega
-   resultados incorrectos. Tu trabajo de hoy es descubrir en
-   que miente antes de arreglarla.
+   Operaciones publicas: agregar, obtener, buscarPorEstacion,
+   actualizar, eliminar, tamano, promedioPm25.
    ============================================================ */
 
 public class RepositorioLecturas {
@@ -19,21 +15,30 @@ public class RepositorioLecturas {
 
     private LecturaSensor[] lecturas;
     private int cantidad;
+    // Metricas internas (contrato seccion 3)
+    private int copiasRealizadas;
+    private int redimensionamientos;
 
     public RepositorioLecturas() {
         this.lecturas = new LecturaSensor[CAPACIDAD_INICIAL];
         this.cantidad = 0;
+        this.copiasRealizadas = 0;
+        this.redimensionamientos = 0;
     }
 
     // ---------- OPERACIONES DEL CONTRATO ----------
 
     /**
      * Agrega una lectura al final del repositorio.
-     * @return true si se agrego, false si no habia espacio
+     * Si el arreglo alcanza su capacidad, invoca redimensionar().
+     * @return true si se agrego, false si lectura es null
      */
     public boolean agregar(LecturaSensor lectura) {
-        if (cantidad == lecturas.length) {
+        if (lectura == null) {
             return false;
+        }
+        if (cantidad == lecturas.length) {
+            redimensionar();
         }
         lecturas[cantidad] = lectura;
         cantidad++;
@@ -42,8 +47,12 @@ public class RepositorioLecturas {
 
     /**
      * Devuelve la lectura que esta en la posicion indicada.
+     * @return la lectura, o null si la posicion esta fuera de rango
      */
     public LecturaSensor obtener(int posicion) {
+        if (posicion < 0 || posicion >= cantidad) {
+            return null;
+        }
         return lecturas[posicion];
     }
 
@@ -55,13 +64,13 @@ public class RepositorioLecturas {
     }
 
     /**
-     * Elimina la lectura de la posicion indicada.
-     *
-     * VERSION INGENUA: revisala con cuidado antes de confiar en ella.
+     * Elimina la lectura de la posicion indicada usando compactacion:
+     * desplaza elementos posteriores una posicion a la izquierda.
+     * @return true si se elimino, false si la posicion esta fuera de rango
      */
-    public void eliminar(int posicion) {
+    public boolean eliminar(int posicion) {
         if (posicion < 0 || posicion >= cantidad) {
-            return;
+            return false;
         }
 
         for (int i = posicion; i < cantidad - 1; i++) {
@@ -70,51 +79,54 @@ public class RepositorioLecturas {
 
         lecturas[cantidad - 1] = null;
         cantidad--;
+        return true;
     }
 
     /**
      * Busca la primera lectura de una estacion.
-     * TODO 1: implementar. Devolver null si no existe.
+     * @return la lectura encontrada, o null si no existe
      */
     public LecturaSensor buscarPorEstacion(String idSensor) {
+        if (idSensor == null) {
+            return null;
+        }
         for (int i = 0; i < cantidad; i++) {
             if (lecturas[i].getIdSensor().equals(idSensor)) {
                 return lecturas[i];
             }
         }
-
         return null;
     }
 
     /**
      * Reemplaza la lectura de una posicion por otra.
-     * TODO 2: implementar, verificando que la posicion sea valida.
+     * @return true si se actualizo, false si posicion invalida o nueva es null
      */
-    public void actualizar(int posicion, LecturaSensor nueva) {
-        if (posicion < 0 || posicion >= cantidad) {
-            return;
+    public boolean actualizar(int posicion, LecturaSensor nueva) {
+        if (posicion < 0 || posicion >= cantidad || nueva == null) {
+            return false;
         }
-
         lecturas[posicion] = nueva;
+        return true;
     }
 
     /**
      * Duplica la capacidad interna del arreglo conservando el contenido.
-     *
-     * TODO 3: implementar. Despues llamalo desde agregar() cuando
-     * el arreglo se llene, para que el repositorio deje de tener techo.
-     *
-     * Pista: no puedes "estirar" un arreglo en Java. Tienes que crear
-     * uno nuevo mas grande y copiar. Piensa cuantas copias implica eso.
+     * Crea un arreglo nuevo del doble de tamano y copia las referencias.
      */
     private void redimensionar() {
+        LecturaSensor[] nuevo = new LecturaSensor[lecturas.length * 2];
+        for (int i = 0; i < cantidad; i++) {
+            nuevo[i] = lecturas[i];
+            copiasRealizadas++;
+        }
+        lecturas = nuevo;
+        redimensionamientos++;
     }
 
     /**
      * Promedio de PM2.5 de todas las lecturas almacenadas.
-     *
-     * TODO 4: revisar. Este metodo asume algo que puede no ser cierto
-     * despues de que alguien llame a eliminar().
+     * Usa 'cantidad' (no lecturas.length) para no incluir posiciones vacias.
      */
     public double promedioPm25() {
         if (cantidad == 0) {
@@ -128,5 +140,19 @@ public class RepositorioLecturas {
         }
 
         return suma / cantidad;
+    }
+
+    /**
+     * Retorna el numero de redimensionamientos realizados (metrica interna).
+     */
+    public int getRedimensionamientos() {
+        return redimensionamientos;
+    }
+
+    /**
+     * Retorna el numero total de copias de referencias realizadas (metrica interna).
+     */
+    public int getCopiasRealizadas() {
+        return copiasRealizadas;
     }
 }

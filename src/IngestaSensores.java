@@ -1,14 +1,14 @@
 /* ============================================================
    PLATAFORMA DE MONITOREO AMBIENTAL URBANO
-   IngestaSensores - VERSION 0.2
+   IngestaSensores - VERSION 1.0 COMPLETA
 
-   Novedades frente a la Semana 1:
-   - La logica esta en metodos, no en un main gigante.
-   - Las lecturas ya no se imprimen y se olvidan: se GUARDAN.
-   - La validacion vive dentro de LecturaSensor.esValida().
-
-   Este archivo esta terminado. Los que estan incompletos son
-   RepositorioLecturas y AnalizadorMatriz.
+   Funcionalidades:
+   - Carga lecturas desde CSV con validacion de formato y rango.
+   - Descarta filas con formato incorrecto o valores fuera de rango.
+   - Detecta y descarta lecturas duplicadas (misma estacion + misma hora)
+     segun Decision 6 del documento de decisiones.
+   - Muestra metricas de ingesta, redimensionamiento, promedio PM2.5,
+     perfil horario, promedios por estacion y hora mas contaminada.
    ============================================================ */
 
 import java.io.BufferedReader;
@@ -19,9 +19,14 @@ public class IngestaSensores {
 
     private static final String ARCHIVO = "lecturas_ampliadas.csv";
     private static final int CAMPOS_ESPERADOS = 5;
+    private static final int NUM_ESTACIONES = 9;
 
     private static int descartadasPorFormato = 0;
     private static int descartadasPorRango = 0;
+    private static int descartadasPorDuplicado = 0;
+
+    // Matriz de control de duplicados: [estacion][hora] = true si ya se registro
+    private static boolean[][] yaRegistrado = new boolean[NUM_ESTACIONES][24];
 
     public static void main(String[] args) throws IOException {
 
@@ -35,17 +40,37 @@ public class IngestaSensores {
         System.out.println("Lecturas almacenadas:      " + repositorio.tamano());
         System.out.println("Descartadas por formato:   " + descartadasPorFormato);
         System.out.println("Descartadas por rango:     " + descartadasPorRango);
+        System.out.println("Descartadas por duplicado: " + descartadasPorDuplicado);
         System.out.println();
-        System.out.println("PM2.5 promedio (repositorio): " + repositorio.promedioPm25());
+        System.out.println("=== METRICAS DE REDIMENSIONAMIENTO ===");
+        System.out.println("Redimensionamientos:       " + repositorio.getRedimensionamientos());
+        System.out.println("Copias de referencias:     " + repositorio.getCopiasRealizadas());
+        System.out.println();
+        System.out.println("=== ANALISIS ===");
+        System.out.printf("PM2.5 promedio (repositorio): %.2f%n", repositorio.promedioPm25());
         System.out.println();
         System.out.println("=== PERFIL HORARIO DE LA CIUDAD ===");
         for (int h = 0; h < 24; h++) {
             System.out.printf("Hora %02d -> PM2.5 promedio: %.2f%n", h, analizador.promedioDeHora(h));
         }
+        System.out.println();
+        System.out.println("=== PROMEDIOS POR ESTACION ===");
+        for (int e = 0; e < NUM_ESTACIONES; e++) {
+            System.out.printf("EST-%03d -> PM2.5 promedio: %.2f%n", e + 1, analizador.promedioDeEstacion(e));
+        }
+        System.out.println();
+        int horaPico = analizador.horaMasContaminada();
+        System.out.printf("Hora mas contaminada: %02d (promedio PM2.5: %.2f)%n",
+                horaPico, analizador.promedioDeHora(horaPico));
+        System.out.println();
+        System.out.println("=== MATRIZ COMPLETA ===");
+        analizador.imprimirMatriz();
     }
 
     /**
      * Lee el archivo linea por linea y alimenta el repositorio y la matriz.
+     * Implementa control de duplicados (Decision 6): ignora lectura si ya
+     * existe registro para la misma estacion en la misma hora.
      */
     private static void cargarArchivo(RepositorioLecturas repositorio,
                                       AnalizadorMatriz analizador) throws IOException {
@@ -62,10 +87,36 @@ public class IngestaSensores {
                 descartadasPorRango++;
                 continue;
             }
+            // Decision 6: control de duplicados (misma estacion + misma hora)
+            int idxEstacion = indiceDeEstacion(lectura.getIdSensor());
+            int hora = lectura.getHora();
+            if (idxEstacion >= 0 && idxEstacion < NUM_ESTACIONES
+                    && hora >= 0 && hora < 24
+                    && yaRegistrado[idxEstacion][hora]) {
+                descartadasPorDuplicado++;
+                continue;
+            }
+            if (idxEstacion >= 0 && idxEstacion < NUM_ESTACIONES
+                    && hora >= 0 && hora < 24) {
+                yaRegistrado[idxEstacion][hora] = true;
+            }
             repositorio.agregar(lectura);
             analizador.registrar(lectura);
         }
         lector.close();
+    }
+
+    /**
+     * Convierte "EST-004" en el indice de fila 3.
+     * @return indice de 0 a 8, o -1 si el formato es invalido
+     */
+    private static int indiceDeEstacion(String idSensor) {
+        try {
+            String numero = idSensor.substring(4);
+            return Integer.parseInt(numero) - 1;
+        } catch (Exception e) {
+            return -1;
+        }
     }
 
     /**
