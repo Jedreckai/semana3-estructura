@@ -13,6 +13,7 @@ El proyecto modela una **Plataforma de Monitoreo Ambiental Urbano** que:
 - Almacena las lecturas en un TAD basado en arreglos con redimensionamiento dinámico
 - Analiza la contaminación por PM2.5 usando una matriz estaciones × horas
 - Calcula promedios por hora, por estación y encuentra la hora más contaminada
+- **Semana 4:** Implementa y compara empíricamente seis algoritmos de ordenamiento (Burbuja con corte temprano, Selección, Inserción, MergeSort, HeapSort y QuickSort con mediana de tres) y analiza el impacto del ordenamiento sobre búsquedas binarias.
 
 ## Estructura del proyecto
 
@@ -22,13 +23,17 @@ ed_red_sensores_iot/
 │   ├── LecturaSensor.java        # Modelo de una lectura de sensor
 │   ├── RepositorioLecturas.java   # TAD con arreglo dinámico
 │   ├── AnalizadorMatriz.java      # Matriz 9×24 para análisis por hora
-│   └── IngestaSensores.java       # Ingesta CSV y punto de entrada (main)
+│   ├── BuscadorLecturas.java      # Búsqueda lineal y binaria por timestamp
+│   ├── Ordenador.java             # 6 algoritmos de ordenamiento con métricas
+│   ├── GeneradorDatos.java        # Generador de datos sintéticos cronológicos
+│   ├── BancoDeOrdenamiento.java   # 5 experimentos comparativos de ordenamiento
+│   └── IngestaSensores.java       # Ingesta CSV y punto de entrada único (main)
 ├── data/
 │   ├── lecturas.csv               # Dataset de prueba (29 filas)
 │   └── lecturas_ampliadas.csv     # Dataset completo (212 filas)
 ├── docs/
 │   ├── contrato_tad.md            # Especificación formal del TAD
-│   ├── decisiones.md              # Registro de decisiones de diseño
+│   ├── decisiones.md              # Registro de decisiones de diseño (S1, S2, S4)
 │   └── GUIA_GIT.md                # Guía de uso de Git para el equipo
 ├── bitacoras/                     # Bitácoras individuales de los estudiantes
 ├── out/                           # Archivos compilados (excluido de Git)
@@ -37,13 +42,13 @@ ed_red_sensores_iot/
 
 ## Cómo compilar y ejecutar
 
-Desde la carpeta raíz del proyecto, con un JDK instalado:
+Desde la carpeta raíz del proyecto (`ed_red_sensores_iot`), con un JDK instalado:
 
 ```bash
-# Compilar
-javac -d out src/LecturaSensor.java src/RepositorioLecturas.java src/AnalizadorMatriz.java src/IngestaSensores.java
+# Compilar todo el proyecto
+javac -d out src/*.java
 
-# Ejecutar (desde la carpeta data/ para que encuentre el CSV)
+# Ejecutar el flujo completo integrado (desde la carpeta data/)
 cd data
 java -cp ../out IngestaSensores
 ```
@@ -56,6 +61,9 @@ java -cp ../out IngestaSensores
 - Arreglos con redimensionamiento por duplicación de capacidad.
 - Validación de rangos físicos y detección de duplicados.
 - Matriz de 9 estaciones × 24 horas para análisis de PM2.5.
+- Instrumentación de algoritmos de ordenamiento: conteo de comparaciones, intercambios y tiempo.
+- Solución al problema del pivote en QuickSort mediante mediana de tres.
+- Preservación del ordenamiento original trabajando sobre copias para rankings multidimensionales.
 
 ## Restricciones de diseño
 
@@ -64,6 +72,7 @@ java -cp ../out IngestaSensores
 - Redimensionamiento por **duplicación** de capacidad
 - Eliminación por **compactación** (desplazamiento a la izquierda)
 - Validación de rangos físicos: temperatura (-40 a 60°C), humedad (0-100%) y PM2.5 (≥ 0)
+- Un único método `main()` como punto de entrada en `IngestaSensores.java`
 
 ## Equipo
 
@@ -74,3 +83,4 @@ java -cp ../out IngestaSensores
 | Juan Pablo Lozada Lopez | AnalizadorMatriz (promedios, ceros fantasma) |
 | Jedreck Triana Venner | LecturaSensor y estructura base |
 | Julian Hernandez | Configuración del proyecto y estructura |
+

@@ -37,4 +37,25 @@ Formato: cada entrada con fecha, decision, alternativas consideradas, justificac
 - **Elegida:** B) Ignorar la lectura duplicada.
 - **Justificación:** Mantiene la precisión de las lecturas en memoria. Evita que registros repetidos en el archivo de origen incrementen innecesariamente el tamaño del repositorio o distorsionen los cálculos de promedios ambientales.
 
+## S4 - Ordenamientos y comparación de eficiencia - 2026-09-28
 
+### DEC-04 — Pivote de QuickSort
+- **Semana:** 4
+- **Problema:** QuickSort con pivote fijo en el primer elemento degrada a $O(n^2)$ con datos ordenados cronológicamente, produciendo particiones desbalanceadas y agotando la pila de llamadas (`StackOverflowError` con 50.000 lecturas).
+- **Alternativas:**
+  - A) Pivote aleatorio.
+  - B) Mediana de tres (primero, medio, último).
+- **Elegida:** B) Mediana de tres.
+- **Justificación:** Garantiza un comportamiento determinista en las pruebas empíricas y equilibra eficientemente las particiones cuando los datos llegan ordenados o casi ordenados (comportamiento típico de sensores en tiempo real), reduciendo la profundidad de recursión de $O(n)$ a $O(\log n)$ y evitando el desbordamiento de pila.
+- **Consecuencia:** QuickSort procesa las 50.000 lecturas ordenadas de forma estable y sin errores de pila.
+
+### DEC-05 — Ordenamiento por Múltiples Criterios y Efecto Colateral en Búsqueda
+- **Semana:** 4
+- **Problema:** Ordenar el repositorio por concentración de PM2.5 destruye el ordenamiento por timestamp, provocando que la búsqueda binaria pierda su precondición y falle al consultar lecturas existentes.
+- **Alternativas:**
+  - A) Trabajar sobre una copia (`rankingPorPm25`).
+  - B) Reordenar / restaurar el orden por timestamp después de emitir el ranking.
+  - C) Mantener índices o estructuras separadas para cada criterio.
+- **Elegida:** A) Trabajar sobre una copia utilizando un algoritmo $O(n \log n)$ (MergeSort).
+- **Justificación:** Mantiene intacto el arreglo base y preserva la precondición de la búsqueda binaria por timestamp ($O(\log n)$) en consultas recurrentes, aislando los efectos secundarios de los reportes o rankings eventuales.
+- **Consecuencia:** Requiere memoria adicional temporal proporcional al tamaño del conjunto ($O(n)$), pero protege la integridad del sistema y evita reprocesar ordenamientos costosos en el repositorio original.

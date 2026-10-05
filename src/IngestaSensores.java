@@ -65,6 +65,18 @@ public class IngestaSensores {
         System.out.println();
         System.out.println("=== MATRIZ COMPLETA ===");
         analizador.imprimirMatriz();
+
+        // ---------- SEMANA 4: ordenamientos y comparacion de eficiencia ----------
+        System.out.println();
+        System.out.println("############ SEMANA 4: ORDENAMIENTOS ############");
+        System.out.println("(los experimentos con 100.000 lecturas pueden tardar ~1 minuto)");
+        System.out.println();
+        BancoDeOrdenamiento banco = new BancoDeOrdenamiento();
+        banco.experimentoUno();
+        banco.experimentoDos();
+        banco.experimentoTres();
+        banco.experimentoCuatro();
+        banco.experimentoCinco();
     }
 
     /**
